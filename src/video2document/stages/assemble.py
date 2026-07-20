@@ -283,19 +283,61 @@ def _write_report(ws: Workspace, pages, healed, suppressed, reinserted) -> None:
 
 
 # -- pdf ----------------------------------------------------------------------
+_PDF_HTML = """<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+@page {{ size: A4; margin: 1.8cm; }}
+body {{ font-family: Helvetica, Arial, sans-serif; font-size: 10pt; line-height: 1.4; }}
+h1 {{ font-size: 18pt; }} h2 {{ font-size: 14pt; }} h3 {{ font-size: 12pt; }}
+table {{ border-collapse: collapse; width: 100%; }}
+th, td {{ border: 1px solid #888888; padding: 4px 6px; text-align: left; }}
+img {{ max-width: 100%; }}
+code, pre {{ font-family: Courier, monospace; font-size: 9pt; }}
+</style></head><body>{body}</body></html>"""
+
+
 def _render_pdf(ws: Workspace) -> None:
+    """Render reconstructed.md to PDF: pandoc if available (best), else pure-pip fallback."""
+    if _render_pdf_pandoc(ws):
+        log.info("PDF rendered via pandoc")
+        return
+    _render_pdf_python(ws)
+    log.info("PDF rendered via xhtml2pdf")
+
+
+def _render_pdf_pandoc(ws: Workspace) -> bool:
     pandoc = shutil.which("pandoc")
     if not pandoc:
-        raise V2DError(
-            "pandoc not found — install it (`sudo apt-get install pandoc` + a PDF engine) "
-            "or drop --pdf (reconstructed.md is the canonical output)."
-        )
+        return False
     proc = subprocess.run(
         [pandoc, ws.reconstructed_md.name, "-o", ws.reconstructed_pdf.name, "--standalone"],
         cwd=ws.out_dir, capture_output=True, text=True,
     )
-    if proc.returncode != 0:
+    if proc.returncode == 0:
+        return True
+    log.warning("pandoc failed (%s); falling back to xhtml2pdf", proc.stderr[-200:].strip())
+    return False
+
+
+def _render_pdf_python(ws: Workspace) -> None:
+    try:
+        import markdown as md_lib
+        from xhtml2pdf import pisa
+    except ImportError as exc:  # pragma: no cover
         raise V2DError(
-            "pandoc failed to render the PDF (a LaTeX/PDF engine may be missing; try "
-            "`--pdf-engine=weasyprint`):\n" + proc.stderr[-800:]
-        )
+            "PDF rendering needs `markdown` + `xhtml2pdf` (run `uv sync`), or install pandoc"
+        ) from exc
+
+    html_body = md_lib.markdown(
+        ws.reconstructed_md.read_text(encoding="utf-8"),
+        extensions=["tables", "fenced_code", "sane_lists"],
+    )
+    html = _PDF_HTML.format(body=html_body)
+
+    def resolve(uri: str, _rel: str) -> str:
+        if uri.startswith(("http://", "https://", "data:")):
+            return uri
+        return str((ws.out_dir / uri).resolve())  # ../assets/... relative to out/
+
+    with ws.reconstructed_pdf.open("wb") as fh:
+        result = pisa.CreatePDF(html, dest=fh, link_callback=resolve, encoding="utf-8")
+    if result.err:
+        raise V2DError("xhtml2pdf could not render the PDF from reconstructed.md")

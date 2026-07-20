@@ -108,6 +108,18 @@ def test_report_has_sections(tmp_path: Path) -> None:
         assert section in report
 
 
+def test_assemble_renders_pdf(tmp_path: Path) -> None:
+    ws = Workspace(tmp_path / "wd")
+    _setup(ws, [
+        {"page": 1,
+         "md": "# Title\n\n| A | B |\n| --- | --- |\n| 1 | 2 |\n\nSome text.",
+         "sidecar": _sc(1)},
+    ])
+    assemble.run(ws, pdf=True, merge_pass=False)
+    assert ws.reconstructed_pdf.exists()
+    assert ws.reconstructed_pdf.read_bytes()[:4] == b"%PDF"  # valid PDF (xhtml2pdf fallback)
+
+
 def test_llm_merge_pass_uses_engine(tmp_path: Path) -> None:
     class MergeStub:
         name = "stub"
