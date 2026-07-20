@@ -178,12 +178,21 @@ def assemble(
     merge_pass: bool = typer.Option(
         True,
         "--merge-pass/--no-merge-pass",
-        help="Run the optional LLM page-boundary merge pass.",
+        help="Refine split page boundaries with a small LLM merge (only when boundaries exist).",
     ),
+    engine: Engine = typer.Option(Engine.claude, "--engine", help="Engine for the merge pass."),
+    model: Optional[str] = typer.Option(None, "--model", help="Model id for the merge pass (optional)."),
 ) -> None:
     """Merge per-page transcriptions into the final reconstructed document."""
     ws = _workspace(workdir)
-    _guard(stages.assemble.run, ws, pdf=pdf, merge_pass=merge_pass)
+    _guard(
+        stages.assemble.run,
+        ws,
+        pdf=pdf,
+        merge_pass=merge_pass,
+        engine=engine.value,
+        model=model,
+    )
 
 
 @app.command()

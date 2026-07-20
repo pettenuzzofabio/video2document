@@ -10,10 +10,10 @@ cropped images), plus an optional rendered PDF.
 See [`PLAN.md`](PLAN.md) for the full architecture, milestones, and design rationale,
 and [`deep-research.md`](deep-research.md) for the underlying research.
 
-> **Status: M3 done.** `extract` (video → timestamped frames), `pages` (frames → one
-> clean image per page), and `transcribe` (page → Markdown + JSON sidecar via a vision
-> LLM, figures cropped into `assets/`) are implemented; `assemble` is the last stub.
-> The default transcription engine is Claude Code (`claude -p`).
+> **Status: v1 complete (M0–M4).** The full pipeline runs end to end — `extract` →
+> `pages` → `transcribe` → `assemble`, plus `v2d run` for the whole chain. Default
+> transcription engine is Claude Code (`claude -p`). See `PLAN.md` for v2 candidates
+> (zoom-in charts, OCR cross-check, continuous-scroll stitching, camera input).
 
 ## How it works
 

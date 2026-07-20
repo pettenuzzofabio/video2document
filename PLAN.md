@@ -321,10 +321,10 @@ not calendar days.
 - [x] Resume/skip + `--pages`/`--force`; per-page failures isolated (raw kept as `.error.txt`); pipeline page number enforced
 - [x] **Acceptance met (real claude)**: it_table_chart page 2 → valid Markdown table; page 3 → chart declared as a figure, cropped asset verified to contain the chart; Italian/accents preserved. Plumbing covered by stub-engine tests (36 passing). Automated text-diff vs ground truth deferred to M6.
 
-### M4 — `v2d assemble` + `v2d run` (1 session)
-- [ ] Concatenation, boundary healing (deterministic), header/footer suppression
-- [ ] `report.md`; `v2d run` end-to-end
-- [ ] **Acceptance**: full fixture video → `reconstructed.md` with no lost content vs manual reading of the source doc; pdftotext diff re-run on the merged output (catches content lost during boundary healing / header suppression).
+### M4 — `v2d assemble` + `v2d run` (done)
+- [x] Concatenation in order; deterministic boundary healing (paragraph + table) with optional LLM merge pass; header/footer verify + suppress/re-insert; missing-page placeholders
+- [x] `out/report.md` (QA); `v2d run` end-to-end with resume; `--pdf` via pandoc
+- [x] **Acceptance met**: `v2d run` on it_table_chart → `reconstructed.md` with intro text, a Markdown table, and the chart embedded as a cropped asset — no content lost, correct order. Unit + full-pipeline (stub-LLM) tests (47 passing). Text-diff vs ground truth deferred to M6.
 
 ### M5 — PDF render + QA hardening (1 session)
 - [ ] pandoc (or weasyprint) rendering, images included, decent defaults for A4

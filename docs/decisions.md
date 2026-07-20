@@ -3,6 +3,24 @@
 One line per decision that isn't obvious from the code or that deviates from `PLAN.md`.
 Newest first.
 
+## M4 — assemble + run (2026-07-20)
+
+- **Block-based assembly**: pages split into blank-line-separated blocks; a boundary
+  between `continues_to_next`/`continues_from_prev` pages merges the trailing block of one
+  with the leading block of the next (handles chained continuations by popping the running tail).
+- **Deterministic healing first** (de-hyphenate/join paragraphs; concatenate table rows,
+  dropping a repeated header+separator). Optional `--merge-pass` refines only the boundary
+  text via `engine.complete()` (text-only); engine is lazy and falls back to deterministic
+  if unavailable. No boundaries ⇒ no LLM call.
+- **Header/footer**: body already excludes them (M3 routes them to the sidecar). Assemble
+  confirms *running* ones by digit-insensitive repetition (≥60% of pages) and keeps them out;
+  one-off values are re-inserted into the body so a misclassified heading isn't lost.
+- **Missing pages** get a visible placeholder in the doc + a report entry (never silently dropped).
+- **PDF** via pandoc (subprocess, cwd=`out/` so `../assets/` resolves); clean error if pandoc
+  or its PDF engine is absent — the Markdown is canonical.
+- **`complete()` added to the Engine protocol** for text-only calls (the merge pass),
+  separate from `transcribe_page()`.
+
 ## M3 — transcribe (2026-07-20)
 
 - **`claude -p` validated headless** from inside a Claude Code session:

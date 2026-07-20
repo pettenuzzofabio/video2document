@@ -27,6 +27,9 @@ class Engine(Protocol):
     def transcribe_page(self, image: Path, prompt: str) -> str:
         """Return the model's raw text response for one page image."""
 
+    def complete(self, prompt: str) -> str:
+        """Return the model's raw text response for a text-only prompt."""
+
 
 def _require(cli: str) -> str:
     path = shutil.which(cli)
@@ -60,6 +63,13 @@ class ClaudeEngine:
             cmd += ["--model", self.model]
         return _run(cmd, self.timeout, "claude")
 
+    def complete(self, prompt: str) -> str:
+        cli = _require("claude")
+        cmd = [cli, "-p", prompt, "--output-format", "text"]
+        if self.model:
+            cmd += ["--model", self.model]
+        return _run(cmd, self.timeout, "claude")
+
 
 class CodexEngine:
     name = "codex"
@@ -72,6 +82,13 @@ class CodexEngine:
         cli = _require("codex")
         full = f"Read the image file at {image}, then do the following.\n\n{prompt}"
         cmd = [cli, "exec", full]
+        if self.model:
+            cmd += ["--model", self.model]
+        return _run(cmd, self.timeout, "codex")
+
+    def complete(self, prompt: str) -> str:
+        cli = _require("codex")
+        cmd = [cli, "exec", prompt]
         if self.model:
             cmd += ["--model", self.model]
         return _run(cmd, self.timeout, "codex")
@@ -90,6 +107,14 @@ class LlmEngine:
         if self.model:
             cmd += ["-m", self.model]
         cmd += ["-a", str(image), prompt]
+        return _run(cmd, self.timeout, "llm")
+
+    def complete(self, prompt: str) -> str:
+        cli = _require("llm")
+        cmd = [cli]
+        if self.model:
+            cmd += ["-m", self.model]
+        cmd += [prompt]
         return _run(cmd, self.timeout, "llm")
 
 

@@ -50,14 +50,13 @@ def test_extract_real_video(tmp_path, tiny_video) -> None:
     assert (workdir / "manifests" / "frames.jsonl").is_file()
 
 
-def test_run_completes_after_extract(tmp_path, tiny_video) -> None:
-    workdir = tmp_path / "wd"
+def test_run_stops_on_stage_failure(tmp_path) -> None:
+    # A missing video makes `extract` fail; `run` must stop with a non-zero exit
+    # before reaching later stages (and without any LLM call).
     result = runner.invoke(
-        app,
-        ["run", str(tiny_video), "--workdir", str(workdir), "--fps", "5", "--no-decimate"],
+        app, ["run", str(tmp_path / "nope.mp4"), "--workdir", str(tmp_path / "wd")]
     )
-    assert result.exit_code == 0
-    assert "pipeline complete" in result.output
+    assert result.exit_code == 1
 
 
 def test_bad_fps_is_rejected(tmp_path) -> None:
