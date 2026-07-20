@@ -339,7 +339,9 @@ not calendar days.
 ### v2 candidates (in likely order of need)
 1. **Zoom segments**: detect scale changes, map zoomed crops to parent page via `detail_images` (schema hook already in place).
 2. **OCR cross-check**: PaddleOCR on each page, diff vs LLM output, flag divergences in `report.md`.
-3. **Continuous-scroll stitching** (y-axis alignment on cropped frames).
+3. **Continuous-scroll stitching** — first cut shipped as `pages --mode scroll` (2D translation
+   mosaic of overlapping slices). Works on dense/textured content; not yet robust on
+   whitespace-heavy pages. Roadmap in `docs/issues.md` (carry-forward, phase correlation, blending).
 4. **Camera-filmed input** (per-frame quad detection + `warpPerspective`).
 5. Searchable image-PDF artifact via OCRmyPDF, if an audit-grade artifact becomes necessary.
 

@@ -3,6 +3,18 @@
 One line per decision that isn't obvious from the code or that deviates from `PLAN.md`.
 Newest first.
 
+## v2 (started) — scroll stitching (2026-07-20)
+
+- **`pages --mode scroll`** (opt-in; default stays `pagefit`): a translation-only mosaic
+  (`stitching.py`) that template-matches consecutive cropped frames, accumulates 2D offsets,
+  and breaks into a new page when the match fails. Reuses viewport+crop; emits the same
+  `pages/*.png` + `pages.jsonl` contract, so transcribe/assemble are unchanged.
+- **Experimental**: works on dense/textured content, unreliable on whitespace-heavy pages
+  (ghosts vs over-segmentation). Findings + roadmap in `docs/issues.md`. Not promoted to a
+  default; needs confidence-weighted carry-forward, phase correlation, and blending to be robust.
+- **Scroll wants `--no-decimate`** at extract (mpdecimate thins by content change, which
+  enlarges frame-to-frame jumps beyond the matcher's range).
+
 ## M4 — assemble + run (2026-07-20)
 
 - **Block-based assembly**: pages split into blank-line-separated blocks; a boundary

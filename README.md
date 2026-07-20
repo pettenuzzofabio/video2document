@@ -32,8 +32,10 @@ independently runnable, inspectable, and resumable:
 
 Clean **screen recordings** of **page-fit** scrolling (each page fully visible at
 some moment), documents in **Italian or English**, transcribed **LLM-vision-first**
-(Claude Code by default). Camera-filmed input, continuous-scroll stitching, zoomed-in
-charts, and a classical-OCR cross-check are explicitly deferred to v2 — see `PLAN.md`.
+(Claude Code by default). Camera-filmed input, zoomed-in charts, and a classical-OCR
+cross-check are deferred to v2 — see `PLAN.md`. An **experimental** first cut of
+continuous-scroll stitching exists as `v2d pages --mode scroll` (extract with
+`--no-decimate`); it works on dense content but is not yet robust — see `docs/issues.md`.
 
 ## Requirements
 

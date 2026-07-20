@@ -31,3 +31,28 @@ not invented (7 unclear spans, all about tiny in-diagram text).
 sent to the Claude API during transcription (expected for the `claude` engine). For
 confidential material, use an offline engine (planned v2 `llama.cpp` adapter) or accept the
 API exposure deliberately.
+
+## 2026-07-20 — scroll stitching (`pages --mode scroll`, EXPERIMENTAL)
+
+First cut of continuous-scroll stitching: a translation mosaic — template-match consecutive
+cropped frames, accumulate offsets, break into a new segment (page) when the match fails.
+
+Findings on the zoomed recording (49.5s, whitespace-heavy architecture doc):
+- **Works on dense/textured content** with good overlap: correct tall/wide mosaics (e.g. 9
+  frames → one 1915×1397 page; horizontal panning handled by the 2D offset).
+- **Not yet reliable on this document overall**, two root causes:
+  - `mpdecimate` thins frames by *content change*, so kept frames often jump more than the
+    matcher's ~30%-of-frame range → breaks. Scroll mode wants many closely-spaced frames
+    (`--no-decimate`) — but that alone over-segmented too (see below).
+  - **Whitespace-heavy pages** are the core issue: a near-blank central patch gives the matcher
+    nothing to lock onto → either mis-alignment **ghosts** (texture guard off) or **over-
+    segmentation** (guard on). 66 frames → 26 pages (ghosts) or 43 pages (clean but fragmented).
+
+Roadmap to make it robust (real CV iteration):
+1. Confidence-weighted placement with **carry-forward** (reuse last good velocity across
+   low-confidence/blank frames instead of breaking).
+2. **Phase correlation** (whole-frame, sub-pixel) as primary estimator; blend overlaps to kill seams.
+3. Genuine **page-break detection** (large discontinuity / full-width whitespace band).
+4. Auto-use `--no-decimate` for scroll mode (record the decimate setting in meta).
+
+Shipped behind the opt-in `--mode scroll`; default `pagefit` behaviour is unchanged.

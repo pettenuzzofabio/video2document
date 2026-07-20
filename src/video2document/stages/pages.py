@@ -49,6 +49,7 @@ def run(
     hamming: int = 6,
     ssim: float = 0.985,  # reserved for the optional SSIM merge pass (not used in v1)
     min_page_ms: float = 400.0,
+    mode: str = "pagefit",
 ) -> None:
     frames = _load_frames(ws)
     if not frames:
@@ -61,6 +62,12 @@ def run(
     log.info("viewport (%s): x=%d y=%d w=%d h=%d", method, *rect)
 
     hashes = _crop_and_score(ws, frames, rect)
+
+    if mode == "scroll":
+        _run_scroll(ws, frames)
+        _write_frames_manifest(ws, frames)
+        return
+
     _compute_persistence(frames, duration_ms)
 
     runs = _group_runs(hashes, hamming)
@@ -364,6 +371,45 @@ def _write_frames_manifest(ws: Workspace, frames: list[dict]) -> None:
                 "is_best": frame.get("is_best", False),
             }
             fh.write(json.dumps(record) + "\n")
+
+
+# -- scroll mode (v2 stitching) ----------------------------------------------
+def _run_scroll(ws: Workspace, frames: list[dict]) -> None:
+    """Stitch overlapping cropped frames into tall page canvases (one per segment)."""
+    import numpy as np
+    from PIL import Image
+
+    from video2document import stitching
+
+    color = [Image.open(ws.root / f["cropped_path"]).convert("RGB") for f in frames]
+    gray = [np.asarray(im.convert("L")) for im in color]
+    segments = stitching.stitch(gray)
+
+    for old in ws.pages_dir.glob("page_*.png"):
+        old.unlink()
+
+    records = []
+    for page_no, segment in enumerate(segments, start=1):
+        canvas = stitching.composite(segment, color)
+        dest = ws.page_image(page_no)
+        canvas.save(dest)
+        first = frames[segment[0].index]
+        records.append({
+            "page": page_no,
+            "source_frame_id": first["frame_id"],
+            "pts_ms": first["pts_ms"],
+            "image": str(dest.relative_to(ws.root)),
+            "stitched_from": len(segment),
+            "size": list(canvas.size),
+            "detail_images": [],
+        })
+    with ws.pages_manifest.open("w", encoding="utf-8") as fh:
+        for record in records:
+            fh.write(json.dumps(record) + "\n")
+    log.info(
+        "scroll stitch: %d frames -> %d page(s) (sizes %s) -> %s",
+        len(frames), len(records), [r["size"] for r in records], ws.pages_dir,
+    )
 
 
 # -- helpers ------------------------------------------------------------------
