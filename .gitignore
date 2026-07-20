@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtualenv / tooling caches
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# uv keeps uv.lock and .python-version in git; the venv is ignored above.
+
+# Pipeline workspaces / runtime data (kept off the Linux-side working dirs too)
+work/
+*.v2d/
+/v2d-work/
+
+# Generated fixtures — regenerate with scripts/make_fixtures.py
+fixtures/generated/
+
+# OS cruft
+.DS_Store
+Thumbs.db
