@@ -79,6 +79,26 @@ def test_viewport_from_stack_finds_changing_region() -> None:
     assert 30 <= w <= 55 and 30 <= h <= 55
 
 
+def test_apply_rotation_dimensions() -> None:
+    from PIL import Image
+
+    img = Image.new("RGB", (100, 60))  # landscape
+    assert pages._apply_rotation(img, "cw").size == (60, 100)
+    assert pages._apply_rotation(img, "ccw").size == (60, 100)
+    assert pages._apply_rotation(img, "180").size == (100, 60)
+    assert pages._apply_rotation(img, "none").size == (100, 60)
+
+
+def test_looks_rotated_heuristic() -> None:
+    upright = np.full((200, 300), 255, np.uint8)
+    upright[::12, :] = 0  # horizontal text-like lines -> rows vary
+    assert not pages._looks_rotated(upright)
+
+    rotated = np.full((200, 300), 255, np.uint8)
+    rotated[:, ::12] = 0  # vertical lines -> columns vary
+    assert pages._looks_rotated(rotated)
+
+
 def test_viewport_from_stack_returns_none_when_static() -> None:
     frames = [np.full((50, 50), 120, dtype=np.uint8) for _ in range(5)]
     assert pages._viewport_from_stack(frames) is None

@@ -50,6 +50,7 @@ def run(
     ssim: float = 0.985,  # reserved for the optional SSIM merge pass (not used in v1)
     min_page_ms: float = 400.0,
     mode: str = "pagefit",
+    rotate: str = "none",
 ) -> None:
     frames = _load_frames(ws)
     if not frames:
@@ -61,7 +62,7 @@ def run(
     _write_viewport(ws, rect, method, frames)
     log.info("viewport (%s): x=%d y=%d w=%d h=%d", method, *rect)
 
-    hashes = _crop_and_score(ws, frames, rect)
+    hashes = _crop_and_score(ws, frames, rect, rotate)
 
     if mode == "scroll":
         _run_scroll(ws, frames)
@@ -220,7 +221,7 @@ def _write_viewport(ws: Workspace, rect, method: str, frames: list[dict]) -> Non
 
 
 # -- crop + per-frame scoring -------------------------------------------------
-def _crop_and_score(ws: Workspace, frames: list[dict], rect) -> list:
+def _crop_and_score(ws: Workspace, frames: list[dict], rect, rotate: str = "none") -> list:
     import cv2
     import imagehash
     import numpy as np
@@ -231,19 +232,57 @@ def _crop_and_score(ws: Workspace, frames: list[dict], rect) -> list:
         old.unlink()
 
     hashes = []
+    checked = False
     for frame in frames:
         crop = Image.open(frame["_abs"]).convert("RGB").crop((x, y, x + w, y + h))
+        crop = _apply_rotation(crop, rotate)
         cropped_path = ws.frames_cropped_dir / Path(frame["path"]).name
         crop.save(cropped_path)
         phash = imagehash.phash(crop)
         gray = np.asarray(crop.convert("L"))
         laplacian_var = float(cv2.Laplacian(gray, cv2.CV_64F).var())
 
+        if rotate == "none" and not checked:
+            checked = True
+            if _looks_rotated(gray):
+                log.warning(
+                    "pages look rotated 90° (text seems to run vertically) — "
+                    "if so, re-run `pages` with --rotate cw or --rotate ccw"
+                )
+
         frame["cropped_path"] = str(cropped_path.relative_to(ws.root))
         frame["phash"] = str(phash)
         frame["laplacian_var"] = round(laplacian_var, 2)
         hashes.append(phash)
     return hashes
+
+
+def _apply_rotation(img, rotate: str):
+    from PIL import Image
+
+    return {
+        "cw": lambda: img.transpose(Image.ROTATE_270),   # PIL ROTATE_* is counter-clockwise
+        "ccw": lambda: img.transpose(Image.ROTATE_90),
+        "180": lambda: img.transpose(Image.ROTATE_180),
+    }.get(rotate, lambda: img)()
+
+
+def _looks_rotated(gray) -> bool:
+    """Heuristic: upright text makes rows vary more than columns; 90°-rotated text
+    makes columns vary more. Compares the coefficient of variation of the dark-pixel
+    projections. Best-effort — used only to warn, never to auto-rotate."""
+    import numpy as np
+
+    g = gray.astype(np.float32)
+    dark = g < (g.mean() - 0.5 * g.std())
+    rows = dark.sum(axis=1).astype(np.float32)
+    cols = dark.sum(axis=0).astype(np.float32)
+
+    def cov(a) -> float:
+        m = float(a.mean())
+        return float(a.var()) / (m * m) if m > 0 else 0.0
+
+    return cov(cols) > 1.6 * cov(rows) and cov(cols) > 0.05
 
 
 def _compute_persistence(frames: list[dict], duration_ms: float) -> None:

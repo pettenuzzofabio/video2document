@@ -54,6 +54,15 @@ class PagesMode(str, Enum):
     scroll = "scroll"    # continuous zoomed scroll → stitch overlapping slices
 
 
+class Rotate(str, Enum):
+    """Bring rotated pages upright (e.g. a PDF rendered rotated to fill the screen)."""
+
+    none = "none"
+    cw = "cw"
+    ccw = "ccw"
+    d180 = "180"
+
+
 def _setup_logging(verbose: bool) -> None:
     logging.basicConfig(
         level=logging.DEBUG if verbose else logging.INFO,
@@ -142,6 +151,9 @@ def pages(
         "--mode",
         help="'pagefit' (each page fully visible) or 'scroll' (stitch a continuous zoomed scroll).",
     ),
+    rotate: Rotate = typer.Option(
+        Rotate.none, "--rotate", help="Bring rotated pages upright: none|cw|ccw|180."
+    ),
 ) -> None:
     """Cluster frames into pages and emit one clean image per page."""
     ws = _workspace(workdir)
@@ -153,6 +165,7 @@ def pages(
         ssim=ssim,
         min_page_ms=min_page_ms,
         mode=mode.value,
+        rotate=rotate.value,
     )
 
 
@@ -221,11 +234,16 @@ def run(
     merge_pass: bool = typer.Option(True, "--merge-pass/--no-merge-pass"),
     decimate: bool = typer.Option(True, "--decimate/--no-decimate"),
     mode: PagesMode = typer.Option(PagesMode.pagefit, "--mode"),
+    rotate: Rotate = typer.Option(Rotate.none, "--rotate"),
 ) -> None:
     """Run the whole pipeline: extract -> pages -> transcribe -> assemble."""
     ws = _workspace(workdir)
     _guard(stages.extract.run, ws, video=video, fps=fps, decimate=decimate)
-    _guard(stages.pages.run, ws, viewport=viewport, hamming=hamming, ssim=ssim, mode=mode.value)
+    _guard(
+        stages.pages.run,
+        ws, viewport=viewport, hamming=hamming, ssim=ssim,
+        mode=mode.value, rotate=rotate.value,
+    )
     _guard(
         stages.transcribe.run, ws, engine=engine.value, pages_spec=None, force=False
     )
