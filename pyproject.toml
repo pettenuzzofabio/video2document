@@ -8,6 +8,8 @@ authors = [{ name = "Fabio Pettenuzzo", email = "pettenuzzofabio@users.noreply.g
 keywords = ["video", "document", "ocr", "pdf", "llm", "markdown", "ffmpeg"]
 dependencies = [
     "typer>=0.15",
+    "imageio>=2.34",
+    "imageio-ffmpeg>=0.5",
 ]
 
 [project.scripts]
@@ -17,7 +19,6 @@ v2d = "video2document.cli:app"
 dev = [
     "pytest>=8.2",
     "pillow>=10.4",
-    "imageio-ffmpeg>=0.5",
 ]
 
 [build-system]

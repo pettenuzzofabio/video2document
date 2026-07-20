@@ -32,22 +32,29 @@ def test_subcommand_help(command: str) -> None:
     assert result.exit_code == 0
 
 
-def test_extract_stub_creates_workspace(tmp_path) -> None:
-    workdir = tmp_path / "work"
+def test_extract_missing_video_errors(tmp_path) -> None:
     result = runner.invoke(
-        app, ["extract", str(tmp_path / "video.mp4"), "--workdir", str(workdir)]
+        app, ["extract", str(tmp_path / "nope.mp4"), "--workdir", str(tmp_path / "wd")]
+    )
+    assert result.exit_code == 1
+
+
+def test_extract_real_video(tmp_path, tiny_video) -> None:
+    workdir = tmp_path / "wd"
+    result = runner.invoke(
+        app,
+        ["extract", str(tiny_video), "--workdir", str(workdir), "--fps", "5", "--no-decimate"],
     )
     assert result.exit_code == 0
-    # The workspace directory tree is created even though the stage is a stub.
-    assert (workdir / "frames" / "raw").is_dir()
-    assert (workdir / "manifests").is_dir()
-    assert (workdir / "out").is_dir()
+    assert list((workdir / "frames" / "raw").glob("*.png"))
+    assert (workdir / "manifests" / "frames.jsonl").is_file()
 
 
-def test_run_stub_chains_all_stages(tmp_path) -> None:
-    workdir = tmp_path / "work"
+def test_run_completes_after_extract(tmp_path, tiny_video) -> None:
+    workdir = tmp_path / "wd"
     result = runner.invoke(
-        app, ["run", str(tmp_path / "video.mp4"), "--workdir", str(workdir)]
+        app,
+        ["run", str(tiny_video), "--workdir", str(workdir), "--fps", "5", "--no-decimate"],
     )
     assert result.exit_code == 0
     assert "pipeline complete" in result.output

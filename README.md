@@ -10,8 +10,9 @@ cropped images), plus an optional rendered PDF.
 See [`PLAN.md`](PLAN.md) for the full architecture, milestones, and design rationale,
 and [`deep-research.md`](deep-research.md) for the underlying research.
 
-> **Status: M0 — scaffolding.** The CLI surface and workspace contract exist; every
-> stage is a stub. Implementation lands milestone by milestone (M1 = `extract`, …).
+> **Status: M1 done.** `v2d extract` is implemented (video → frames + a timestamped
+> manifest); `pages` / `transcribe` / `assemble` are still stubs. Implementation
+> continues milestone by milestone.
 
 ## How it works
 
@@ -36,7 +37,9 @@ charts, and a classical-OCR cross-check are explicitly deferred to v2 — see `P
 ## Requirements
 
 - **Python ≥ 3.12** and [**uv**](https://docs.astral.sh/uv/).
-- **ffmpeg / ffprobe** — frame extraction (M1). Ubuntu/WSL: `sudo apt-get install ffmpeg`.
+- **ffmpeg / ffprobe** — frame extraction. **Optional:** if not on PATH, the ffmpeg
+  bundled with `imageio-ffmpeg` is used automatically (metadata then falls back to
+  imageio). Install for the richest metadata: `sudo apt-get install ffmpeg`.
 - **Claude Code CLI** (`claude`) — default transcription engine (M3).
 - **pandoc** — only for `v2d assemble --pdf` (M5). Ubuntu/WSL: `sudo apt-get install pandoc`.
 

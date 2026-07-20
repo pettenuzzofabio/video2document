@@ -110,6 +110,11 @@ class Workspace:
         return self.meta_dir / "source.ffprobe.json"
 
     @property
+    def meta_json(self) -> Path:
+        """Normalized metadata (prober-agnostic); always written by `extract`."""
+        return self.meta_dir / "source.meta.json"
+
+    @property
     def frames_manifest(self) -> Path:
         return self.manifests_dir / "frames.jsonl"
 

@@ -183,8 +183,12 @@ The heart of v1. Five steps:
    within the Hamming threshold belong to the same page cluster; a scroll transition
    (distance spike) separates clusters. Optional second-pass SSIM (scikit-image, on
    ~512-px-wide grayscale, `data_range=255`) to merge clusters that pHash split
-   spuriously. Discard transition clusters that are too short (page-turn animation
-   frames form 1–2-frame clusters).
+   spuriously. Distinguish **pages from transitions by persistence**: a page's content
+   is stable for a while; a transition frame lasts only ~1 sample. Because M1's
+   `mpdecimate` collapses each stable dwell to a single frame, dwell duration is read
+   from **pts gaps** in `frames.jsonl` (gap to the next frame; for the last frame,
+   `duration_s − pts`), *not* from cluster size — large gap ⇒ page, ~1-frame gap ⇒
+   transition (discard). With `--no-decimate`, equivalently use cluster size.
 4. **Best frame per cluster**: screen recordings have no motion blur, so frames inside a
    stable cluster are near-identical — Laplacian variance is just the tiebreak (it also
    rejects the occasional mid-render frame); prefer mid-cluster frames over cluster
@@ -299,14 +303,14 @@ not calendar days.
 - [ ] `.gitignore` (workdirs, `__pycache__`, venv), first commit + push
 - [ ] Record 2–3 **fixture videos** yourself (short: a 3-page PDF paged with PgDn in fit-page mode; one Italian, one English, one with a table + a chart; at least one includes a **back-scroll**, i.e. revisiting an earlier page). Keep the **source PDFs** next to the fixtures — they are free ground truth for accuracy checks. Store outside git or via LFS; document how to regenerate them.
 
-### M1 — `v2d extract` (1 session)
-- [ ] ffprobe/ffmpeg subprocess wrappers, fps cap + `mpdecimate`, pts-named PNGs
-- [ ] `frames.jsonl` with pts (+ full-frame hash for exact-duplicate dropping)
-- [ ] Verify on fixtures: frame count sane, manifest readable
+### M1 — `v2d extract` (done)
+- [x] ffmpeg/ffprobe resolver (system, else bundled `imageio-ffmpeg`); fps cap + `mpdecimate`; sequential PNGs
+- [x] `frames.jsonl` with accurate pts (parsed from `showinfo`); normalized `source.meta.json` via ffprobe-or-imageio
+- [x] Verified on fixtures (en_simple → 9 frames, en_backscroll → 17) + unit/integration tests (21 passing)
 
 ### M2 — `v2d pages` (1–2 sessions, the algorithmic core)
 - [ ] Viewport auto-detection + manual override + preview PNG
-- [ ] pHash clustering (post-crop) with transition-spike detection; SSIM merge pass
+- [ ] pHash clustering (post-crop) + persistence (pts-gap) page/transition split; SSIM merge pass
 - [ ] Best-frame selection; revisit merge; `pages/` + `pages.jsonl`
 - [ ] **Acceptance**: on all fixtures, exactly N pages out for N distinct pages — the back-scroll fixture must yield **no duplicate page**. Each page visually clean/sharp. Tune `--hamming`/min-cluster-length here.
 

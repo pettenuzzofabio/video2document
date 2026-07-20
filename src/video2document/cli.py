@@ -101,10 +101,15 @@ def extract(
     video: Path = typer.Argument(..., help="Source video (a screen recording)."),
     workdir: Path = WorkdirOpt,
     fps: float = typer.Option(6.0, "--fps", min=0.1, help="Frame sampling rate (fps)."),
+    decimate: bool = typer.Option(
+        True,
+        "--decimate/--no-decimate",
+        help="Drop near-identical frames at decode (mpdecimate).",
+    ),
 ) -> None:
     """Decode the video into frames and build the frame manifest."""
     ws = _workspace(workdir)
-    _guard(stages.extract.run, ws, video=video, fps=fps)
+    _guard(stages.extract.run, ws, video=video, fps=fps, decimate=decimate)
 
 
 @app.command()
@@ -175,10 +180,11 @@ def run(
     engine: Engine = typer.Option(Engine.claude, "--engine"),
     pdf: bool = typer.Option(False, "--pdf", help="Also render a PDF."),
     merge_pass: bool = typer.Option(True, "--merge-pass/--no-merge-pass"),
+    decimate: bool = typer.Option(True, "--decimate/--no-decimate"),
 ) -> None:
     """Run the whole pipeline: extract -> pages -> transcribe -> assemble."""
     ws = _workspace(workdir)
-    _guard(stages.extract.run, ws, video=video, fps=fps)
+    _guard(stages.extract.run, ws, video=video, fps=fps, decimate=decimate)
     _guard(stages.pages.run, ws, viewport=viewport, hamming=hamming, ssim=ssim)
     _guard(
         stages.transcribe.run, ws, engine=engine.value, pages_spec=None, force=False
