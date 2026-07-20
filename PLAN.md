@@ -21,7 +21,7 @@ so each stage is independently runnable, inspectable, and resumable.
 | LLM engine | **Claude Code (`claude -p`)**, behind a pluggable interface | `codex exec` and `llm` are alternate backends implementable later with zero pipeline changes. |
 | Output | **Markdown, semantically complete** + assets + optional PDF | Tables reproduced as Markdown tables; charts/figures/images preserved by **cropping them from the page PNG** and embedding them as image files. 100% graphical match is not a goal; zero semantic loss is. Trickiest regions → embed the screenshot. |
 | Doc languages | Italian + English only | Prompt handles both; output keeps the source language. |
-| UX | **Staged subcommands** (`v2d extract`, `v2d pages`, `v2d transcribe`, `v2d assemble`, `v2d run`) | Re-runnable per stage; `run` chains everything. |
+| UX | **Staged subcommands** + folder-mode `run` | Re-runnable per stage; `v2d run <folder>` chains everything and delivers `<video>.md` (+ `<video>_assets/`) beside the inputs. |
 | Stack | Python, **uv + pyproject.toml**, package `video2document`, console script `v2d` | Modern, reproducible. |
 
 ### Explicitly deferred (do NOT build in v1)

@@ -3,6 +3,16 @@
 One line per decision that isn't obvious from the code or that deviates from `PLAN.md`.
 Newest first.
 
+## Folder mode + delivery (2026-07-20)
+
+- **`v2d run` is folder-first**: pass a video *or a folder*. The workspace defaults to
+  `<video>.v2d` beside the video; images next to the video are auto-matched as diagram
+  details; and the result is delivered into the folder as `<video>.md` (+ `<video>_assets/`,
+  + `<video>.pdf` with `--pdf`), rewriting image paths to the sibling assets folder. This is
+  the requested default UX (drop video + images in a folder → get the `.md` back, images included).
+- Auto-details failures (e.g. a stray non-diagram image) warn and are skipped — never abort the run.
+- `--no-details` / `--no-deliver` opt out; `delivery.py` holds the (unit-tested) glue.
+
 ## M5/M6 — close-out (2026-07-20)
 
 - **`--pdf` works without sudo**: pandoc if on PATH (best quality), else a pure-pip fallback

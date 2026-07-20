@@ -23,7 +23,7 @@ from typing import Callable, Optional
 
 import typer
 
-from video2document import __version__, stages
+from video2document import __version__, delivery, stages
 from video2document.exceptions import V2DError
 from video2document.workspace import Workspace
 
@@ -247,21 +247,44 @@ def details(
 
 @app.command()
 def run(
-    video: Path = typer.Argument(..., help="Source video (a screen recording)."),
-    workdir: Path = WorkdirOpt,
+    target: Path = typer.Argument(
+        ..., help="A video file, or a folder containing the video (+ optional hi-res diagram images)."
+    ),
+    workdir: Optional[Path] = typer.Option(
+        None, "--workdir", "-w", help="Workspace dir (default: <video>.v2d next to the video)."
+    ),
     fps: float = typer.Option(6.0, "--fps", min=0.1, help="Frame sampling rate (fps)."),
     viewport: str = typer.Option("auto", "--viewport", help="'auto' or 'x,y,w,h'."),
     hamming: int = typer.Option(6, "--hamming", min=0),
     ssim: float = typer.Option(0.985, "--ssim", min=0.0, max=1.0),
     engine: Engine = typer.Option(Engine.claude, "--engine"),
+    model: Optional[str] = typer.Option(None, "--model"),
     pdf: bool = typer.Option(False, "--pdf", help="Also render a PDF."),
     merge_pass: bool = typer.Option(True, "--merge-pass/--no-merge-pass"),
     decimate: bool = typer.Option(True, "--decimate/--no-decimate"),
     mode: PagesMode = typer.Option(PagesMode.pagefit, "--mode"),
     rotate: Rotate = typer.Option(Rotate.none, "--rotate"),
+    auto_details: bool = typer.Option(
+        True, "--details/--no-details",
+        help="Match hi-res images found next to the video as diagram details.",
+    ),
+    deliver: bool = typer.Option(
+        True, "--deliver/--no-deliver",
+        help="Write the result next to the inputs as <video>.md (+ <video>_assets/).",
+    ),
 ) -> None:
-    """Run the whole pipeline: extract -> pages -> transcribe -> assemble."""
-    ws = _workspace(workdir)
+    """Full pipeline. Point it at a video, or a folder holding the video (+ optional
+    hi-res diagram photos); the finished <video>.md (with images) is written beside the
+    inputs."""
+    try:
+        video = delivery.find_video(target)
+    except V2DError as exc:
+        typer.secho(f"error: {exc}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1) from exc
+
+    folder = video.parent
+    ws = _workspace(workdir if workdir else folder / f"{video.stem}.v2d")
+
     _guard(stages.extract.run, ws, video=video, fps=fps, decimate=decimate)
     _guard(
         stages.pages.run,
@@ -269,7 +292,19 @@ def run(
         mode=mode.value, rotate=rotate.value,
     )
     _guard(
-        stages.transcribe.run, ws, engine=engine.value, pages_spec=None, force=False
+        stages.transcribe.run, ws, engine=engine.value, pages_spec=None, force=False, model=model
     )
-    _guard(stages.assemble.run, ws, pdf=pdf, merge_pass=merge_pass)
-    typer.secho(f"pipeline complete — workspace: {ws.root}", fg=typer.colors.GREEN)
+
+    if auto_details and delivery.folder_images(folder):
+        try:  # a stray non-diagram image shouldn't abort the whole run
+            stages.details.run(ws, details_dir=str(folder), engine=engine.value, model=model)
+        except V2DError as exc:
+            typer.secho(f"note: details step skipped ({exc})", fg=typer.colors.YELLOW, err=True)
+
+    _guard(stages.assemble.run, ws, pdf=pdf, merge_pass=merge_pass, engine=engine.value, model=model)
+
+    if deliver:
+        out = delivery.deliver(ws, folder, video.stem, pdf=pdf)
+        typer.secho(f"done — {out}", fg=typer.colors.GREEN)
+    else:
+        typer.secho(f"pipeline complete — workspace: {ws.root}", fg=typer.colors.GREEN)

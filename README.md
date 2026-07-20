@@ -61,24 +61,30 @@ uv run v2d --help
 
 ## Usage
 
+**Simplest — folder mode.** Put the video, plus (optionally) high-resolution photos of any
+dense diagrams, in one folder and point `run` at it. The finished document is written back
+into that folder as `<video>.md`, with its images alongside in `<video>_assets/`:
+
 ```bash
-# whole pipeline
-uv run v2d run recording.mp4 --workdir ~/v2d-work/mydoc --pdf
-
-# or stage by stage (each re-runnable and resumable)
-uv run v2d extract recording.mp4 --workdir ~/v2d-work/mydoc --fps 6
-uv run v2d pages      --workdir ~/v2d-work/mydoc
-uv run v2d transcribe --workdir ~/v2d-work/mydoc --engine claude
-uv run v2d assemble   --workdir ~/v2d-work/mydoc --pdf
-
-# optional: for dense diagrams, drop hi-res photos in <workdir>/details/ and run:
-uv run v2d details    --workdir ~/v2d-work/mydoc   # ORB-matches each photo to its page
+uv run v2d run ~/docs/mydoc          # folder holding mydoc.mp4 (+ optional diagram .png/.jpg)
+uv run v2d run ~/docs/mydoc --pdf    # also write <video>.pdf
+#  ->  ~/docs/mydoc/mydoc.md , mydoc_assets/ , (mydoc.pdf)
 ```
 
-For very dense diagrams the video can't resolve, supply a **high-resolution photo** of each
-(in `<workdir>/details/`). `v2d details` matches each photo to the page it belongs to (ORB
-feature matching) and extracts its data into that page — only for the pages that need it.
-If pages were rendered rotated, pass `--rotate cw|ccw|180` to `pages`.
+`run` auto-detects the images next to the video and matches each to the page it belongs to
+(diagram detail). Intermediate artifacts live in `<video>.v2d/`. Useful flags:
+`--pdf`, `--rotate cw|ccw|180` (pages rendered rotated), `--mode scroll` (continuous zoomed
+scroll — experimental), `--no-details` / `--no-deliver`.
+
+**Stage by stage** (each re-runnable and resumable — for tuning or debugging):
+
+```bash
+uv run v2d extract mydoc.mp4 --workdir wd --fps 6
+uv run v2d pages      --workdir wd            # + --rotate / --mode scroll
+uv run v2d transcribe --workdir wd --engine claude
+uv run v2d details    --workdir wd            # optional: match hi-res diagram photos to pages
+uv run v2d assemble   --workdir wd --pdf
+```
 
 **Tip (WSL):** keep `--workdir` on the Linux filesystem (e.g. `~/v2d-work/...`), not on
 `/mnt/c`, because frame extraction is I/O-heavy and the Windows mount is slow.
