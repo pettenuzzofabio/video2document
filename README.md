@@ -10,9 +10,10 @@ cropped images), plus an optional rendered PDF.
 See [`PLAN.md`](PLAN.md) for the full architecture, milestones, and design rationale,
 and [`deep-research.md`](deep-research.md) for the underlying research.
 
-> **Status: M1 done.** `v2d extract` is implemented (video → frames + a timestamped
-> manifest); `pages` / `transcribe` / `assemble` are still stubs. Implementation
-> continues milestone by milestone.
+> **Status: M2 done.** `v2d extract` (video → timestamped frames) and `v2d pages`
+> (frames → one clean image per page: viewport detection, clustering, revisit merge)
+> are implemented; `transcribe` / `assemble` are still stubs. Implementation continues
+> milestone by milestone.
 
 ## How it works
 

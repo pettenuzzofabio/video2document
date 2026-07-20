@@ -10,6 +10,10 @@ dependencies = [
     "typer>=0.15",
     "imageio>=2.34",
     "imageio-ffmpeg>=0.5",
+    "opencv-python>=4.9",
+    "imagehash>=4.3",
+    "pillow>=10.4",
+    "numpy>=2.0",
 ]
 
 [project.scripts]
@@ -18,7 +22,6 @@ v2d = "video2document.cli:app"
 [dependency-groups]
 dev = [
     "pytest>=8.2",
-    "pillow>=10.4",
 ]
 
 [build-system]

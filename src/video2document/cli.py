@@ -122,12 +122,25 @@ def pages(
         6, "--hamming", min=0, help="Max pHash Hamming distance within one page."
     ),
     ssim: float = typer.Option(
-        0.985, "--ssim", min=0.0, max=1.0, help="SSIM threshold for the merge pass."
+        0.985, "--ssim", min=0.0, max=1.0, help="SSIM threshold (reserved for the optional merge pass)."
+    ),
+    min_page_ms: float = typer.Option(
+        400.0,
+        "--min-page-ms",
+        min=0.0,
+        help="Minimum time a page must stay visible to count (briefer = transition).",
     ),
 ) -> None:
     """Cluster frames into pages and emit one clean image per page."""
     ws = _workspace(workdir)
-    _guard(stages.pages.run, ws, viewport=viewport, hamming=hamming, ssim=ssim)
+    _guard(
+        stages.pages.run,
+        ws,
+        viewport=viewport,
+        hamming=hamming,
+        ssim=ssim,
+        min_page_ms=min_page_ms,
+    )
 
 
 @app.command()

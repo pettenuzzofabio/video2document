@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
 from video2document import tools
+
+_REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.fixture
@@ -28,3 +31,26 @@ def tiny_video(tmp_path_factory) -> Path:
         capture_output=True,
     )
     return path
+
+
+@pytest.fixture
+def make_fixture(tmp_path_factory):
+    """Generate a named synthetic fixture video and return its path.
+
+    Runs scripts/make_fixtures.py in a temp dir (deterministic, no committed assets).
+    """
+
+    def _make(name: str) -> Path:
+        out = tmp_path_factory.mktemp("fx")
+        subprocess.run(
+            [
+                sys.executable, str(_REPO_ROOT / "scripts" / "make_fixtures.py"),
+                "--only", name, "--out", str(out), "--fps", "6",
+            ],
+            check=True,
+            capture_output=True,
+            cwd=_REPO_ROOT,
+        )
+        return out / f"{name}.mp4"
+
+    return _make

@@ -308,11 +308,11 @@ not calendar days.
 - [x] `frames.jsonl` with accurate pts (parsed from `showinfo`); normalized `source.meta.json` via ffprobe-or-imageio
 - [x] Verified on fixtures (en_simple → 9 frames, en_backscroll → 17) + unit/integration tests (21 passing)
 
-### M2 — `v2d pages` (1–2 sessions, the algorithmic core)
-- [ ] Viewport auto-detection + manual override + preview PNG
-- [ ] pHash clustering (post-crop) + persistence (pts-gap) page/transition split; SSIM merge pass
-- [ ] Best-frame selection; revisit merge; `pages/` + `pages.jsonl`
-- [ ] **Acceptance**: on all fixtures, exactly N pages out for N distinct pages — the back-scroll fixture must yield **no duplicate page**. Each page visually clean/sharp. Tune `--hamming`/min-cluster-length here.
+### M2 — `v2d pages` (done)
+- [x] Viewport auto-detection (temporal variance) + `--viewport x,y,w,h` override + preview PNG
+- [x] Anchored pHash runs + persistence (pts-gap) page/transition split (SSIM pass deferred — not needed on fixtures)
+- [x] Best-frame (Laplacian) selection; revisit merge; `pages/` + `pages.jsonl`
+- [x] **Acceptance met**: en_simple → 3 pages; en_backscroll `[0,1,2,1,0]` → 3 (no duplicates); it_table_chart crops capture table + chart cleanly. Unit + integration tests (29 passing). Defaults `--hamming 6`, `--min-page-ms 400`.
 
 ### M3 — `v2d transcribe` with Claude engine (1–2 sessions)
 - [ ] Engine protocol + `claude -p` adapter (headless, image input, retry-on-malformed)

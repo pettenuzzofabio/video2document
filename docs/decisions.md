@@ -3,6 +3,24 @@
 One line per decision that isn't obvious from the code or that deviates from `PLAN.md`.
 Newest first.
 
+## M2 — pages (2026-07-20)
+
+- **Viewport by temporal variance**: sample frames → per-pixel stddev over a downscaled
+  stack → Otsu + morphology → largest-component bbox, padded. `--viewport x,y,w,h`
+  override; always writes `viewport_preview.png` to eyeball; full-frame fallback (loud
+  warning) if detection degenerates.
+- **Anchored runs, not pairwise**: a frame joins a run while it stays pHash-similar to
+  the run's *anchor* (first frame), so a slow scroll breaks the run instead of chaining
+  — this is what makes "no stable run ⇒ continuous scroll" a reliable fail-loud signal.
+- **Persistence classifies pages**: a run held ≥ `--min-page-ms` (default 400) is a page,
+  read from pts-gap duration — robust to mpdecimate collapsing a dwell to one frame.
+- **Revisit merge**: page runs with look-alike best frames collapse (back-scroll); pages
+  ordered by first appearance. Known limit: genuinely identical pages merge into one.
+- **SSIM merge pass deferred** (no scikit-image): pHash + persistence suffice on the
+  fixtures; `--ssim` is accepted but reserved. Revisit if pHash proves noisy on real video.
+- **Best frame** = max Laplacian variance, ties toward mid-run (screen recordings have no
+  motion blur, so this mostly just rejects the rare mid-render frame).
+
 ## M1 — extract (2026-07-20)
 
 - **Hybrid ffmpeg resolution** (`tools.ffmpeg_path`): prefer system ffmpeg, else the
