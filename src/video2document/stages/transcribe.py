@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from pathlib import Path
 
 from video2document import engines, prompts
@@ -23,6 +24,10 @@ from video2document.workspace import Workspace
 log = logging.getLogger(__name__)
 
 _FIGURE_PAD_PCT = 2.0  # expand each figure bbox by this % of page size before cropping
+# `![alt](FIGURE:figN)` or `[text](FIGURE:figN)` — image or link using the placeholder
+_ORPHAN_FIGURE_RE = re.compile(
+    rf"!?\[([^\]]*)\]\({re.escape(prompts.FIGURE_PLACEHOLDER_PREFIX)}[^)]*\)"
+)
 
 
 class _ParseError(Exception):
@@ -136,27 +141,39 @@ def _strip_fences(text: str) -> str:
 # -- figures ------------------------------------------------------------------
 def _process_figures(ws: Workspace, page_no: int, image: Path, markdown: str, sidecar: dict) -> str:
     figures = sidecar.get("figures") or []
-    if not figures:
+    if figures:
+        from PIL import Image
+
+        page_img = Image.open(image).convert("RGB")
+        width, height = page_img.size
+        for fig in figures:
+            fig_id = fig["id"]
+            asset = ws.figure_asset(page_no, fig_id)
+            crop = _crop_figure(page_img, fig.get("bbox_pct"), width, height)
+            crop.save(asset)
+            rel = f"../assets/{asset.name}"
+            placeholder = f"]({prompts.FIGURE_PLACEHOLDER_PREFIX}{fig_id})"
+            if placeholder in markdown:
+                markdown = markdown.replace(placeholder, f"]({rel})")
+            else:
+                caption = fig.get("caption") or fig_id
+                markdown += f"\n\n![{caption}]({rel})\n"
+    return _strip_orphan_placeholders(markdown)
+
+
+def _strip_orphan_placeholders(markdown: str) -> str:
+    """Neutralize `FIGURE:figN` placeholders with no matching figure entry.
+
+    The model sometimes uses the placeholder syntax for a plain link, or references a
+    figN it never declared; leaving it would emit a broken `](FIGURE:...)` into the
+    output. Keep the visible text, drop the placeholder link.
+    """
+    if prompts.FIGURE_PLACEHOLDER_PREFIX not in markdown:
         return markdown
-
-    from PIL import Image
-
-    page_img = Image.open(image).convert("RGB")
-    width, height = page_img.size
-
-    for fig in figures:
-        fig_id = fig["id"]
-        asset = ws.figure_asset(page_no, fig_id)
-        crop = _crop_figure(page_img, fig.get("bbox_pct"), width, height)
-        crop.save(asset)
-        rel = f"../assets/{asset.name}"
-        placeholder = f"]({prompts.FIGURE_PLACEHOLDER_PREFIX}{fig_id})"
-        if placeholder in markdown:
-            markdown = markdown.replace(placeholder, f"]({rel})")
-        else:
-            caption = fig.get("caption") or fig_id
-            markdown += f"\n\n![{caption}]({rel})\n"
-    return markdown
+    orphans = _ORPHAN_FIGURE_RE.findall(markdown)
+    if orphans:
+        log.warning("dropped %d unresolved figure placeholder(s)", len(orphans))
+    return _ORPHAN_FIGURE_RE.sub(lambda m: m.group(1), markdown)
 
 
 def _crop_figure(page_img, bbox_pct, width: int, height: int):

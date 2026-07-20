@@ -133,6 +133,28 @@ def test_degenerate_bbox_falls_back_to_full_page(tmp_path: Path) -> None:
     assert Image.open(ws.figure_asset(1, "fig1")).size == (400, 600)
 
 
+def test_orphan_figure_placeholder_is_stripped(tmp_path: Path) -> None:
+    ws = Workspace(tmp_path / "wd")
+    _setup_pages(ws, 1)
+    # references FIGURE:fig9 (never declared) as a link, alongside the real fig1
+    response = VALID_RESPONSE.replace(
+        "![Grafico vendite](FIGURE:fig1)",
+        "See [italy page](FIGURE:fig9) and ![Grafico vendite](FIGURE:fig1)",
+    )
+    transcribe.run(ws, engine="stub", pages_spec=None, force=False, engine_impl=StubEngine(response))
+    md = ws.page_md(1).read_text(encoding="utf-8")
+    assert "FIGURE:fig9" not in md and "FIGURE:" not in md
+    assert "italy page" in md                       # orphan link -> plain text kept
+    assert "../assets/page_0001_fig1.png" in md      # declared figure still embedded
+
+
+def test_strip_orphan_placeholders_unit() -> None:
+    strip = transcribe._strip_orphan_placeholders
+    assert strip("a [x](FIGURE:f2) b") == "a x b"
+    assert strip("![alt](FIGURE:f3)") == "alt"
+    assert strip("nothing here") == "nothing here"
+
+
 def test_parse_page_spec() -> None:
     assert transcribe._parse_page_spec("3,7-9") == {3, 7, 8, 9}
     assert transcribe._parse_page_spec("1") == {1}
