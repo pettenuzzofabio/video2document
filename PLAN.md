@@ -337,7 +337,7 @@ not calendar days.
 - [ ] Unit tests for clustering/healing on synthetic manifests; smoke test on a tiny fixture in CI (transcribe mocked)
 
 ### v2 candidates (in likely order of need)
-1. **Zoom segments**: detect scale changes, map zoomed crops to parent page via `detail_images` (schema hook already in place).
+1. **Zoom / hi-res diagram supplements** — shipped as `v2d details`: supplied hi-res diagram photos are ORB-matched to their page (homography RANSAC) and their data extracted into it (recorded via `detail_images`). Validated on the real doc (AS-IS diagram → page 3, 339 inliers). In-video zoom-segment auto-detection is still future.
 2. **OCR cross-check**: PaddleOCR on each page, diff vs LLM output, flag divergences in `report.md`.
 3. **Continuous-scroll stitching** — first cut shipped as `pages --mode scroll` (2D translation
    mosaic of overlapping slices). Works on dense/textured content; not yet robust on

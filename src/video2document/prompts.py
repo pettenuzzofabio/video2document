@@ -105,6 +105,17 @@ This is page {page_no}; set "page" to {page_no}.
 """
 
 
+#: Prompt for extracting a supplied high-resolution diagram photo into Markdown.
+DETAIL_EXTRACTION_PROMPT = (
+    "This is a high-resolution image of a single diagram from a document page. "
+    "Extract its content faithfully as GitHub-flavored Markdown: the diagram title "
+    "(if any), every visible text label, and the relationships/connections between "
+    "elements (as a bullet list or a table). Transcribe verbatim in the original "
+    "language; do not translate, summarize, or invent anything. Mark anything you "
+    "cannot read as [unclear]. Output ONLY the Markdown, with no preamble or sentinels."
+)
+
+
 def build_transcription_prompt(page_no: int) -> str:
     return _TEMPLATE.format(
         md_sentinel=MARKDOWN_SENTINEL,

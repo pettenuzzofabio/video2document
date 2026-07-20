@@ -7,6 +7,6 @@ and write files under it, and raise
 :class:`~video2document.exceptions.V2DError` for user-fixable problems.
 """
 
-from . import assemble, extract, pages, transcribe
+from . import assemble, details, extract, pages, transcribe
 
-__all__ = ["extract", "pages", "transcribe", "assemble"]
+__all__ = ["extract", "pages", "transcribe", "assemble", "details"]

@@ -26,6 +26,7 @@ independently runnable, inspectable, and resumable:
 | 2 | `v2d pages` | frames → one clean image per page | M2 |
 | 3 | `v2d transcribe` | page images → per-page Markdown + JSON sidecar | M3 |
 | 4 | `v2d assemble` | per-page Markdown → `reconstructed.md` (+ optional PDF) | M4 |
+| + | `v2d details` | *(optional)* match supplied hi-res diagram photos to their page and extract their data into it | v2 |
 | — | `v2d run` | the whole chain, extract → assemble | — |
 
 ## Scope (v1)
@@ -67,7 +68,15 @@ uv run v2d extract recording.mp4 --workdir ~/v2d-work/mydoc --fps 6
 uv run v2d pages      --workdir ~/v2d-work/mydoc
 uv run v2d transcribe --workdir ~/v2d-work/mydoc --engine claude
 uv run v2d assemble   --workdir ~/v2d-work/mydoc --pdf
+
+# optional: for dense diagrams, drop hi-res photos in <workdir>/details/ and run:
+uv run v2d details    --workdir ~/v2d-work/mydoc   # ORB-matches each photo to its page
 ```
+
+For very dense diagrams the video can't resolve, supply a **high-resolution photo** of each
+(in `<workdir>/details/`). `v2d details` matches each photo to the page it belongs to (ORB
+feature matching) and extracts its data into that page — only for the pages that need it.
+If pages were rendered rotated, pass `--rotate cw|ccw|180` to `pages`.
 
 **Tip (WSL):** keep `--workdir` on the Linux filesystem (e.g. `~/v2d-work/...`), not on
 `/mnt/c`, because frame extraction is I/O-heavy and the Windows mount is slow.

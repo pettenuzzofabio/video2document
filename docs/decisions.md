@@ -3,6 +3,18 @@
 One line per decision that isn't obvious from the code or that deviates from `PLAN.md`.
 Newest first.
 
+## v2 (started) — hi-res diagram supplements + rotation (2026-07-20)
+
+- **`v2d details`**: for dense diagrams illegible in the video, the user drops hi-res photos
+  in `<workdir>/details/`. Each is matched to its page by **ORB features + homography RANSAC**
+  (deterministic, no LLM), embedded on that page, and one LLM pass extracts its data into the
+  page Markdown. Only matched pages are touched (`detail_images` in pages.jsonl). Standalone
+  stage, run between transcribe and assemble. Validated on the real doc: the high-res AS-IS
+  diagram matched page 3 (339 inliers) and its previously-`[unclear]` labels were fully extracted.
+- **`pages --rotate {none,cw,ccw,180}`** brings rotated pages upright (PDFs rendered rotated to
+  fill a landscape screen); with `none`, a projection-profile heuristic *warns* if pages look
+  rotated 90° (never auto-rotates — cw/ccw is ambiguous). The two real recordings tested upright.
+
 ## v2 (started) — scroll stitching (2026-07-20)
 
 - **`pages --mode scroll`** (opt-in; default stays `pagefit`): a translation-only mosaic

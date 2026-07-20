@@ -222,6 +222,30 @@ def assemble(
 
 
 @app.command()
+def details(
+    workdir: Path = WorkdirOpt,
+    details_dir: Optional[Path] = typer.Option(
+        None, "--details", help="Folder of hi-res diagram photos (default <workdir>/details)."
+    ),
+    engine: Engine = typer.Option(Engine.claude, "--engine", help="Engine for the extraction pass."),
+    model: Optional[str] = typer.Option(None, "--model", help="Model id (optional)."),
+    min_matches: int = typer.Option(
+        15, "--min-matches", min=1, help="Min ORB inliers to accept a photo↔page match."
+    ),
+) -> None:
+    """Match supplied hi-res diagram photos to pages and extract their data into them."""
+    ws = _workspace(workdir)
+    _guard(
+        stages.details.run,
+        ws,
+        details_dir=str(details_dir) if details_dir else None,
+        engine=engine.value,
+        model=model,
+        min_matches=min_matches,
+    )
+
+
+@app.command()
 def run(
     video: Path = typer.Argument(..., help="Source video (a screen recording)."),
     workdir: Path = WorkdirOpt,
