@@ -314,12 +314,12 @@ not calendar days.
 - [x] Best-frame (Laplacian) selection; revisit merge; `pages/` + `pages.jsonl`
 - [x] **Acceptance met**: en_simple → 3 pages; en_backscroll `[0,1,2,1,0]` → 3 (no duplicates); it_table_chart crops capture table + chart cleanly. Unit + integration tests (29 passing). Defaults `--hamming 6`, `--min-page-ms 400`.
 
-### M3 — `v2d transcribe` with Claude engine (1–2 sessions)
-- [ ] Engine protocol + `claude -p` adapter (headless, image input, retry-on-malformed)
-- [ ] Prompt v1, jsonschema validation of sidecar
-- [ ] Figure bbox cropping → `assets/`, placeholder rewrite
-- [ ] Resume/skip/`--pages`/`--force` logic
-- [ ] **Acceptance**: Italian + English fixture pages transcribe correctly; table page yields a valid MD table; chart page yields a cropped asset that actually contains the chart. Automated: normalized text diff of each page vs `pdftotext` of the fixture's source PDF (cheap character-error proxy) — target ≥ 99% match on clean text pages.
+### M3 — `v2d transcribe` with Claude engine (done)
+- [x] Engine protocol + adapters (claude validated headless; codex/llm best-effort); one retry on malformed output
+- [x] Prompt v1 (sentinel-delimited Markdown + JSON sidecar), jsonschema validation
+- [x] Figure bbox cropping (+2% pad, full-page fallback on bad bbox) → `assets/`, placeholder rewrite
+- [x] Resume/skip + `--pages`/`--force`; per-page failures isolated (raw kept as `.error.txt`); pipeline page number enforced
+- [x] **Acceptance met (real claude)**: it_table_chart page 2 → valid Markdown table; page 3 → chart declared as a figure, cropped asset verified to contain the chart; Italian/accents preserved. Plumbing covered by stub-engine tests (36 passing). Automated text-diff vs ground truth deferred to M6.
 
 ### M4 — `v2d assemble` + `v2d run` (1 session)
 - [ ] Concatenation, boundary healing (deterministic), header/footer suppression

@@ -155,6 +155,9 @@ def transcribe(
     force: bool = typer.Option(
         False, "--force", help="Re-transcribe pages that already have output."
     ),
+    model: Optional[str] = typer.Option(
+        None, "--model", help="Model id for the engine (optional; engine default otherwise)."
+    ),
 ) -> None:
     """Transcribe each page image into Markdown + a structured sidecar."""
     ws = _workspace(workdir)
@@ -164,6 +167,7 @@ def transcribe(
         engine=engine.value,
         pages_spec=pages_spec,
         force=force,
+        model=model,
     )
 
 

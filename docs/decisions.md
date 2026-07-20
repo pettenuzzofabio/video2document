@@ -3,6 +3,23 @@
 One line per decision that isn't obvious from the code or that deviates from `PLAN.md`.
 Newest first.
 
+## M3 — transcribe (2026-07-20)
+
+- **`claude -p` validated headless** from inside a Claude Code session:
+  `claude -p "Read the image at <abs> … " --allowedTools Read --output-format text`
+  reads the image and returns clean text. Adapters: claude (validated), codex/llm (best-effort).
+- **Sentinel-delimited output, not code fences** (`===V2D_MARKDOWN===` / `===V2D_JSON===`):
+  a transcribed page can itself contain ``` fences. Defensive fence-strip on the JSON part.
+- **jsonschema on the sidecar**, types (no strict enums) to avoid spurious retries on
+  wording. One retry on malformed output, then keep raw as `.error.txt` and continue —
+  a per-page failure doesn't kill the batch.
+- **Figures**: the model emits `![cap](FIGURE:figN)` placeholders + a `figures[]` bbox_pct;
+  the stage crops (+2% pad) into `assets/` and rewrites the placeholder. Bad/degenerate
+  bbox → embed the full page. `../assets/...` resolves from both `llm/` and `out/`.
+- **Pipeline page number enforced** (`sidecar["page"] = page_no`), not trusted from the model.
+- **Anti-hallucination**: strict no-guess prompt + `[unclear: …]` + per-page isolation;
+  the OCR cross-check (v2) is the fallback if real runs show invention.
+
 ## M2 — pages (2026-07-20)
 
 - **Viewport by temporal variance**: sample frames → per-pixel stddev over a downscaled
