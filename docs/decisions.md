@@ -3,6 +3,19 @@
 One line per decision that isn't obvious from the code or that deviates from `PLAN.md`.
 Newest first.
 
+## M5/M6 — close-out (2026-07-20)
+
+- **`--pdf` works without sudo**: pandoc if on PATH (best quality), else a pure-pip fallback
+  (`markdown` → HTML → `xhtml2pdf`, no system libraries). Validated: 11-page PDF, 6 embedded
+  diagram images, full text incl. the extracted hi-res diagram data.
+- **opencv-python → opencv-python-headless**: the pipeline never opens GUI windows, and the
+  headless wheel imports on bare servers/CI (no `libGL`). Drop-in swap.
+- **CI**: GitHub Actions runs `uv sync && pytest` on push/PR — needs no claude/ffmpeg/poppler
+  (claude is stubbed in tests, ffmpeg is the bundled imageio-ffmpeg binary).
+- **M5 closed** (PDF + LLM merge pass + real-video run/issues log all done). **M6**: `--verbose`
+  done, engine seam proven, CI added; a per-workdir config file was deliberately **skipped**
+  (CLI flags already cover tuning — avoid over-engineering).
+
 ## v2 (started) — hi-res diagram supplements + rotation (2026-07-20)
 
 - **`v2d details`**: for dense diagrams illegible in the video, the user drops hi-res photos

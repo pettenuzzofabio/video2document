@@ -331,10 +331,10 @@ not calendar days.
 - [ ] Optional LLM boundary-merge pass
 - [ ] Run on a **real** target video; log every failure mode into `docs/issues.md`
 
-### M6 — Polish (ongoing)
-- [ ] Config file for thresholds (`v2d.toml` per workdir), `--verbose` logging
-- [ ] Second engine adapter (`llm` CLI is the cheapest to add) to prove the seam
-- [ ] Unit tests for clustering/healing on synthetic manifests; smoke test on a tiny fixture in CI (transcribe mocked)
+### M6 — Polish
+- [x] `--verbose` logging (global flag). Per-workdir config file: **skipped** — the CLI flags cover all tuning (avoid over-engineering).
+- [x] Engine seam proven: `engines.py` ships claude (validated) + codex + llm adapters, exercised via the stub engine in tests.
+- [x] Unit tests for clustering/healing/stitching/details (57 total); **GitHub Actions CI** runs `uv sync && pytest` on every push (opencv-headless → runs on bare runners; claude stubbed; bundled ffmpeg).
 
 ### v2 candidates (in likely order of need)
 1. **Zoom / hi-res diagram supplements** — shipped as `v2d details`: supplied hi-res diagram photos are ORB-matched to their page (homography RANSAC) and their data extracted into it (recorded via `detail_images`). Validated on the real doc (AS-IS diagram → page 3, 339 inliers). In-video zoom-segment auto-detection is still future.

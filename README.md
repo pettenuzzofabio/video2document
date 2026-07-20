@@ -1,5 +1,7 @@
 # video2document
 
+![CI](https://github.com/pettenuzzofabio/video2document/actions/workflows/ci.yml/badge.svg)
+
 Reconstruct a document from a **screen recording of someone scrolling through it**.
 
 The pipeline extracts frames from the video, isolates one clean image per page,
